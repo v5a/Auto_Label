@@ -1,0 +1,27 @@
+{
+  "version": "5.2.0.post4",
+  "flags": {},
+  "shapes": [
+    {
+      "label": "person",
+      "points": [
+        [
+          367.5892333984375,
+          741.1195678710938
+        ],
+        [
+          403.09527587890625,
+          798.9850463867188
+        ]
+      ],
+      "group_id": null,
+      "description": "",
+      "shape_type": "rectangle",
+      "flags": {}
+    }
+  ],
+  "imagePath": "demo7.jpg",
+  "imageData": null,
+  "imageHeight": 1367,
+  "imageWidth": 2048
+}
