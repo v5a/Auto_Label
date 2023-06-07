@@ -4,6 +4,7 @@ from tkinter.filedialog import askdirectory
 from tkinter import *
 from tkinter import ttk
 import cv2
+import subprocess
 import os
 os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
 import sys
@@ -63,7 +64,7 @@ ckpt_config_filename = "GroundingDINO_SwinB.cfg.py"
 
 groundingdino_model = load_model_hf(ckpt_repo_id, ckpt_filenmae, ckpt_config_filename)
 BOX_TRESHOLD = 0.3
-TEXT_TRESHOLD = 0.6
+TEXT_TRESHOLD = 0.25
 
 import sys
 sys.path.append("..")
@@ -95,7 +96,7 @@ def autolabeling(img_src,text,shape_type="polygon"):
 
     annotated_frame = annotate(image_source=image_source, boxes=boxes, logits=logits, phrases=phrases)
     annotated_frame = annotated_frame[...,::-1] # BGR to RGB
-
+    print("phrases: ",phrases)
     # box: normalized box xywh -> unnormalized xyxy
     H, W, _ = image_source.shape
     # print("boxes",boxes)
@@ -150,9 +151,11 @@ def autolabeling(img_src,text,shape_type="polygon"):
     if 'boxes_list' not in dir():
         return
     if shape_type=='rectangle':
+        n=0
         for boxes in boxes_list:
             #-----------------shapes----------------#
-            label=text#------#
+            label=phrases[n]#------#
+            n+=1
             # points=contours_
             group_id = None
             description=""
@@ -171,14 +174,17 @@ def autolabeling(img_src,text,shape_type="polygon"):
                 shapes.append(shape)
             else:
                 shapes = [shape]
+        n=0
     #-------------------------------------------------------------------------------------------#
     if 'contour_list' not in dir():
         return
     if shape_type=='polygon':
+        n=0
         for contour_ in contour_list:
             contours_ = contour_.reshape(-1,2).tolist()
             #-----------------shapes----------------#
-            label=text#------#
+            label=phrases[n]#------#
+            n+=1
             points=contours_
             group_id = None
             description=""
@@ -198,7 +204,58 @@ def autolabeling(img_src,text,shape_type="polygon"):
                 shapes.append(shape)
             else:
                 shapes = [shape]
+        n=0
     #-------------------------------------------------------------------------------------------#
+    if shape_type=='polygon_and_rectangle':
+        n=0
+        for contour_ in contour_list:
+            contours_ = contour_.reshape(-1,2).tolist()
+            #-----------------shapes----------------#
+            label=phrases[n]#------#
+            n+=1
+            points=contours_
+            group_id = None
+            description=""
+            shape_type="polygon"
+            flags={}
+            #-----------------shapes----------------#
+            shape = {
+                "label": label,
+                "points":points,
+                "group_id": group_id,
+                "description": description,
+                "shape_type": shape_type,
+                "flags": flags
+                }
+            
+            if 'shapes' in dir():
+                shapes.append(shape)
+            else:
+                shapes = [shape]
+        n=0
+        for boxes in boxes_list:
+            #-----------------shapes----------------#
+            label=phrases[n]#------#
+            n+=1
+            # points=contours_
+            group_id = None
+            description=""
+            shape_type="rectangle"
+            flags={}
+            #-----------------shapes----------------#
+            shape = {
+                "label": label,
+                "points":[[boxes[0],boxes[1]],[boxes[2],boxes[3]]],
+                "group_id": group_id,
+                "description": description,
+                "shape_type": shape_type,
+                "flags": flags
+                }
+            if 'shapes' in dir():
+                shapes.append(shape)
+            else:
+                shapes = [shape]
+        n=0
     imagePath=imagePath_
     imageData = None
     imageHeight = imageHeight
@@ -259,8 +316,12 @@ def to_label(self):
     hobby_rectangle = hobby2.get()
     if hobby_polygons==True and hobby_rectangle==False:
         shape_type = 'polygon'
-    else:
+    elif hobby_polygons==False and hobby_rectangle==True:
         shape_type = 'rectangle'
+    elif hobby_polygons==True and hobby_rectangle==True:
+        shape_type = 'polygon_and_rectangle'
+    else:
+        return
     text = text_for_DINO.get()
     progressbar['maximum']=len(global_names)
     
@@ -273,7 +334,8 @@ def to_label(self):
 #-------------------------------------------------------------------------------------------------------------------------------------------------------#
 def open_labelme(self):
     cmd = "labelme"+" "+global_files
-    os.system(cmd)
+    # os.system(cmd)#阻塞主进程
+    subprocess.Popen(cmd)
 #创建操作窗口
 root = tkinter.Tk()
 root.title("自动标注")
