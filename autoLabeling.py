@@ -288,7 +288,9 @@ def autolabeling(img_src,text,shape_type="polygon"):
 #-------------------------------------------------------------------------------------------------------------------------------------------------------#
 #-------------------------------------------------------------------------------------------------------------------------------------------------------#
 def select_folder(self):
-    text1.insert(tkinter.INSERT, '')   
+    #清空text1中的内容
+    text1.delete(0.0, tkinter.END)
+    # text1.insert(tkinter.INSERT, '')   
     files = filedialog.askdirectory()
     text1.insert(tkinter.INSERT, files)     
     # files = filedialog.askopenfilenames(filetypes=(('image files', ['*.jpg','*.png','*.bmp','*.jpeg']),('All files', '*.*')),title='Select Input File')
